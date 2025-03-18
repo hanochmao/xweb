@@ -1,0 +1,70 @@
+{% extends "headnav.html" %}
+
+{% block title %}muscley{% endblock %}
+
+{% block head %}
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.3/dist/echarts.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <h2>ECharts 示例图表</h2>
+    <div id="chart" style="width: 50%; height: 50vh; background-color: #f9f9f9;">
+        <p>图表加载中...</p>
+    </div>
+    <script>
+        var myChart = echarts.init(document.getElementById('chart'));
+
+        // 动态适配容器大小
+        window.addEventListener('resize', function () {
+            myChart.resize();
+        });
+
+        // 异步获取数据
+        fetch('/statis/data')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.categories || !data.values) {
+                    throw new Error('数据格式错误');
+                }
+                var option = {
+                    title: {
+                        text: '单词折线图'
+                    },
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: data.categories
+                    },
+                    yAxis: {
+                        type: 'value'
+                    },
+                    series: [{
+                        data: data.values,
+                        type: 'line'
+                    }]
+                };
+                myChart.setOption(option);
+            })
+            .catch(error => {
+                console.error('Error fetching or processing chart data:', error);
+                myChart.setOption({
+                    title: { text: '数据加载失败' },
+                    xAxis: { type: 'category', data: [] },
+                    yAxis: { type: 'value' },
+                    series: [{ type: 'line', data: [] }]
+                });
+            });
+    </script>
+{% endblock %}

@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DATA-SCREEN</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.3/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .header {
+            width: 100%;
+            height: 8%;
+            background-color: #2c3e50;
+            display: flex;
+            justify-content: space-between; /* 左右两端对齐 */
+            align-items: center;
+        }
+
+        .nav-a {
+            margin-left: 10%;
+            display: flex;
+            flex-direction: row;
+            gap: 50px;
+        }
+
+        .back-btn {
+            margin-right: 5%;
+        }
+
+
+
+        .nav-a a, .back-btn{
+            width: 200px;
+            color: white;
+            text-decoration: none;
+            padding: 15px; /* 和上导航栏一致 */
+            text-align: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            border-radius: 4px;
+        }
+
+        .nav-a a:hover, .back-btn:hover {
+            background-color: #1abc9c;
+        }
+
+
+        /* 数据展示区域样式 */
+        .content {
+            background-color: #ecf0f1;
+        }
+
+
+        .data-num {
+            height: 200px;
+            width: 100%;
+            border-color: #6c757d;
+            border-style: solid;
+        }
+
+        .data-pic {
+            height: 600px;
+            display: flex;
+        }
+
+        .data-line {
+            width: 33%;
+            border-style: solid;
+            border-color: black;
+        }
+
+        .data-pie {
+            width: 33%;
+            border-color: #0b2e13;
+            border-style: solid;
+        }
+
+        .data-bar {
+            width: 34%;
+            border-color: #0b2e13;
+            border-style: solid;
+        }
+
+
+
+    </style>
+</head>
+<body>
+    <!-- 上导航栏 -->
+    <div class="header">
+        <div class="nav-a">
+            <a href="#" onclick="window.location.href='{{ home_addr }}/statis'">Overall</a>
+            <a href="#" onclick="window.location.href='{{ home_addr }}/statis/data/words'">Words</a>
+            <a href="#" onclick="window.location.href='{{ home_addr }}/statis'">Speaking</a>
+            <a href="#" onclick="window.location.href='{{ home_addr }}/future'">Partner</a>
+        </div>
+        <!-- 用户按钮，固定在最右边 -->
+        <div class="back-btn" onclick="window.location.href='{{ home_addr }}'">Back Home</div>
+    </div>
+
+    <!-- 数据展示区域 -->
+    <div class="content">
+        <div class="data-num">
+        </div>
+
+        <div class="data-pic">
+            <div class="data-line">
+                <div id="line" style="width: 100%; height: 100%; background-color: #f9f9f9;"></div>
+            </div>
+            <div class="data-bar">
+                <div id="bar" style="width: 100%; height: 100%; background-color: #f9f9f9;"></div>
+            </div>
+
+            <div class="data-pie">
+                <div id="pie" style="width: 100%; height: 100%; background-color: #f9f9f9;"></div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <script>
+        // 处理数据首页要加载的数据内容-2
+        var myChart = echarts.init(document.getElementById('line'));
+        var myBar = echarts.init(document.getElementById('bar'));
+        var myPie = echarts.init(document.getElementById('pie'));
+        // 动态适配容器大小
+        window.addEventListener('resize', function () {
+            myPie.resize();
+            myBar.resize();
+            myChart.resize();
+        });
+        // 异步获取数据
+        fetch('/statis/data')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.categories || !data.values) {
+                    throw new Error('数据格式错误');
+                }
+                var option = {
+                    title: {
+                        text: '单词折线图'
+                    },
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: data.categories
+                    },
+                    yAxis: {
+                        type: 'value'
+                    },
+                    series: [{
+                        data: data.values,
+                        type: 'line'
+                    }]
+                };
+                myChart.setOption(option);
+
+                var option1 = {
+                    title: {
+                        text: '单词条形图'
+                    },
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: data.words
+                    },
+                    yAxis: {
+                        type: 'value'
+                    },
+                    series: [{
+                        data: data.num,
+                        type: 'bar'
+                    }]
+                };
+                myBar.setOption(option1);
+
+
+                var option2 = {
+                    title: {
+                        text: '单词饼状图'
+                    },
+                    tooltip: {
+                        trigger: 'item'
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: data.percentage
+                    },
+                    yAxis: {
+                        type: 'value'
+                    },
+                    series: [{
+                        data: data.rate,
+                        type: 'pie'
+                    }]
+                };
+                myPie.setOption(option2);
+
+            })
+            .catch(error => {
+                console.error('Error fetching or processing chart data:', error);
+                myChart.setOption({
+                    title: { text: '数据加载失败' },
+                    xAxis: { type: 'category', data: [] },
+                    yAxis: { type: 'value' },
+                    series: [{ type: 'line', data: [] }]
+                });
+                myBar.setOption({
+                    title: { text: '数据加载失败' },
+                    xAxis: { type: 'category', data: [] },
+                    yAxis: { type: 'value' },
+                    series: [{ type: 'line', data: [] }]
+                });
+            });
+    </script>
+</body>
+</html>

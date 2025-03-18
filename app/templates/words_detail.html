@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Learning</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body, html {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+        }
+        .word-main-container {
+            display: flex;
+        }
+        .options {
+            width: 250px;
+            height: 1000px;
+            margin-top: 100px;
+            margin-left: 200px; /* 与单词列表的间距 */
+            margin-right: 100px;
+            display: flex;
+            flex-direction: column;
+            gap: 50px;
+        }
+        .check-container {
+            margin-top: 100px;
+            text-align: center;
+            width: 1800px;
+            height: 1000px;
+        }
+
+
+        .options label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+
+
+        .word-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center; /* 单词横向居中 */
+
+        }
+
+        .word-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .tooltip {
+            position: absolute;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            padding: 20px;
+            width: 1000px; /* 宽度 */
+            height: 300px;
+            display: none; /* 默认隐藏 */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            box-sizing: border-box; /* 确保宽度和高度包括内边距和边框 */
+        }
+        .tooltip p {
+            margin: 0 0 10px 0;
+        }
+        .tooltip button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        #next-btn, #gen-btn, #back-btn {
+            margin-top: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 250px;
+            height: 50px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            margin-left: 50px;
+        }
+
+        .voice-container {
+            display: flex;
+            gap: 20px;
+        }
+
+
+        .text-container textarea{
+            margin-top: 30px;
+            width: 1800px;
+            height: 600px;
+            font-size: 36px;
+        }
+
+
+    </style>
+</head>
+<body>
+    <div class="all-container">
+        <div class="word-main-container">
+        <!-- 左侧单选框 -->
+            <div class="options">
+                <label><input type="radio" name="option" value="1"> 1-1000</label>
+                <label><input type="radio" name="option" value="2"> 1001-2000</label>
+                <label><input type="radio" name="option" value="3"> 2001-3000</label>
+                <label><input type="radio" name="option" value="4"> 3001-4000</label>
+                <label><input type="radio" name="option" value="5"> 4001-5000</label>
+                <label><input type="radio" name="option" value="6"> 5001-6000</label>
+                <label><input type="radio" name="option" value="7"> 6001-7000</label>
+                <label><input type="radio" name="option" value="8"> 7001-8000</label>
+                <label><input type="radio" name="option" value="9"> 8001-9000</label>
+                <label><input type="radio" name="option" value="10"> 9001-10000</label>
+            </div>
+
+            <!-- 单词列表和按钮 -->
+            <div class="check-container">
+                <div class="word-list" id="word-list">
+                    <!-- 单词单选框将在这里动态生成 -->
+                </div>
+                <div class="operate-container">
+                    <button id="next-btn">Next Batch</button>
+                    <button id="gen-btn">Generate Passage</button>
+                    <button id="back-btn" onclick="window.location.href='{{ home_addr }}'">Back</button>
+                </div>
+                <div class="text-container">
+                    <textarea id="unmastered-words" readonly placeholder="Passage will be generated here"></textarea>
+                </div>
+            </div>
+
+            <!-- 工具提示 -->
+            <div id="tooltip" class="tooltip">
+                <div class="voice-container">
+                    <div>
+                        <p id="tooltip-us"></p>
+                    </div>
+                    <div>
+                        <p id="tooltip-uk"></p>
+                    </div>
+                </div>
+                <div>
+                    <p id="tooltip-meaning"></p>
+                </div>
+                <p id="tooltip-example"></p>
+                <button id="speak-example">Speak Example</button>
+            </div>
+        </div>
+    </div>
+
+
+
+
+    <script>
+        let hideTooltipTimeout; // 用于存储延迟隐藏的定时器
+        const homeAddr = "{{ home_addr }}";
+        // 语音合成函数
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'en-US'; // 设置语言为英语
+                speechSynthesis.speak(utterance);
+            } else {
+                console.error('Web Speech API is not supported in this browser.');
+            }
+        }
+
+        // 加载单词
+        function loadWordsBatch(rangeOption, wordStates) {
+            fetch('/check/words/batch', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    range_option: rangeOption,
+                    word_state: wordStates
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const wordList = document.getElementById('word-list');
+                wordList.innerHTML = '';
+                data.forEach((wordObj, index) => {
+                    const wordItem = document.createElement('div');
+                    wordItem.className = 'word-item';
+                    wordItem.innerHTML = `
+                        <input type="checkbox" id="word-${index}" name="word-${index}">
+                        <label for="word-${index}"
+                               onmouseover="handleMouseOver(event, '${wordObj.fword}', '${wordObj.fmeaning}', '${wordObj.fscentence}', '${wordObj.famerican_voice}', '${wordObj.fenglish_voice}')"
+                               onmouseout="startHideTooltip()">${wordObj.fword}</label>
+                    `;
+                    wordList.appendChild(wordItem);
+                });
+            });
+        }
+
+        function handleMouseOver(event, fword, fmeaning, fscentence,famerican_voice,fenglish_voice) {
+            clearTimeout(hideTooltipTimeout); // 取消延迟隐藏
+            showTooltip(event, fword, fmeaning, fscentence,famerican_voice,fenglish_voice); // 显示子页面
+            speakText(fword); // 自动朗读单词
+        }
+
+        function showTooltip(event, fword, fmeaning, fscentence,famerican_voice,fenglish_voice) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.style.display = 'block';
+            // document.getElementById('tooltip-word').innerText = `Word: ${fword}`;
+            document.getElementById('tooltip-us').innerText = `US: ${famerican_voice}`;
+            document.getElementById('tooltip-uk').innerText = `UK: ${fenglish_voice}`;
+            document.getElementById('tooltip-meaning').innerText = `Meaning: ${fmeaning}`;
+            document.getElementById('tooltip-example').innerText = `Example: ${fscentence}`;
+
+            // 绑定例句朗读功能
+            document.getElementById('speak-example').onclick = () => {
+                speakText(fscentence);
+            };
+
+            // 动态计算子页面的位置
+            const tooltipWidth = tooltip.offsetWidth;
+            const tooltipHeight = tooltip.offsetHeight;
+            const wordRect = event.target.getBoundingClientRect();
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+
+            let left = wordRect.left;
+            let top = wordRect.bottom + 10; // 显示在单词下方
+
+            // 如果子页面超出右边界，向左偏移
+            if (left + tooltipWidth > windowWidth) {
+                left = wordRect.right - tooltipWidth;
+            }
+
+            // 如果子页面超出下边界，向上偏移
+            if (top + tooltipHeight > windowHeight) {
+                top = wordRect.top - tooltipHeight - 10;
+            }
+
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${top}px`;
+        }
+
+        function startHideTooltip() {
+            // 设置延迟隐藏（300 毫秒）
+            hideTooltipTimeout = setTimeout(() => {
+                hideTooltip();
+            }, 100);
+        }
+
+        function hideTooltip() {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.style.display = 'none';
+        }
+
+        // 点击 "Next" 按钮
+        document.getElementById('next-btn').addEventListener('click', () => {
+            // 获取用户选择的单选框值
+            const selectedOption = document.querySelector('input[name="option"]:checked')?.value || 0;
+
+            // 获取单词的选择状态
+            const wordCheckboxes = document.querySelectorAll('.word-item input[type="checkbox"]');
+            const wordStates = Array.from(wordCheckboxes).map((checkbox, index) => ({
+                word: checkbox.nextElementSibling.innerText,
+                selected: checkbox.checked
+            }));
+
+            // 加载新批次的单词
+            loadWordsBatch(selectedOption, wordStates);
+        });
+
+        // 鼠标移动到子页面时，取消隐藏
+        document.getElementById('tooltip').addEventListener('mouseover', () => {
+            clearTimeout(hideTooltipTimeout); // 取消延迟隐藏
+        });
+
+        // 鼠标离开子页面时，延迟隐藏
+        document.getElementById('tooltip').addEventListener('mouseout', () => {
+            startHideTooltip();
+        });
+
+
+        //处理生成文章的按钮
+        document.getElementById('gen-btn').addEventListener('click', () => {
+            let optionValue = 0
+            const selectedOption = document.querySelector('input[name="option"]:checked');
+            if (selectedOption) {
+                optionValue = selectedOption.value
+            }
+            axios.post(`${homeAddr}/passage/llm`, {
+                choice: optionValue,
+                flag: 'word2passage',
+            })
+                .then(response => {
+                    document.getElementById('unmastered-words').value = response.data.text_received;
+                    console.log(response.data);
+                })
+                .catch(error => {
+                    console.error('There was an error!', error);
+                });
+        });
+
+        // 初始加载第一批单词
+        loadWordsBatch(null, []); // 第一次加载时没有选择状态
+    </script>
+</body>
+</html>

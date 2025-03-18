@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    {% block head %}{% endblock %}
+    <title>{% block title %}Default Title{% endblock %}</title>
+</head>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        .navbar {
+            background-color: #e9ecef;
+            padding: 20px 50px; /* 可以适当调整 */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: center; /* 居中对齐内容 */
+            align-items: center; /* 垂直居中对齐 */
+            position: relative; /* 保证绝对定位可用 */
+            width: 100%; /* 确保导航栏宽度始终填充整个屏幕 */
+            box-sizing: border-box; /* 确保内外边距不会超出宽度 */
+            margin: 0 auto;
+            font-family: Arial, sans-serif;
+        }
+        .navmenu {
+            justify-content: center;
+            display: flex;
+        }
+
+
+        .nav-item {
+            margin: 0 50px;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+
+        .info-container {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: #f1f1f1;
+            padding: 50px;
+            font-size: 20px;
+            display: flex;
+          }
+        .info-container p {
+            text-align: left;
+        }
+        .info-container a {
+            margin-left: 1200px;
+            color: #007bff;
+        }
+
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column; /* 将导航栏内容纵向排列 */
+                align-items: stretch; /* 让每个菜单项宽度拉满 */
+            }
+
+            .navmenu {
+                flex-direction: column; /* 菜单项纵向排列 */
+                align-items: center; /* 可选：居中对齐菜单项 */
+            }
+
+            .nav-item {
+                margin: 20px 0; /* 调整菜单项间距 */
+            }
+        }
+    </style>
+
+<body>
+    <div class="navbar">
+        <div class="navmenu">
+            <a class="nav-item" id="home" href="{{ url_for('bp_home.home') }}">HOME</a>
+            {% if user %}
+                <span class="nav-item" id="login">{{ user.username }}</span>
+                <a class="nav-item" id="register" href="{{ url_for('bp_user.logout') }}">LOGOUT</a>
+            {% else %}
+                <a class="nav-item" id="login" href="{{ url_for('bp_user.login') }}">LOGIN</a>
+                <a class="nav-item" id="register" href="{{ url_for('bp_user.register') }}">REGISTER</a>
+            {% endif %}
+        </div>
+    </div>
+    {% block body %}{% endblock %} <!--定义插入的位置-->
+
+    <div class="info-container">
+        <p>eggmuscle © 2025. All rights reserved. 粤ICP备2022082612号-1</p>
+        <a id="contact-us" href="{{ home_addr }}/contact">CONTACT:1705927851@qq.com</a>
+    </div>
+</body>
+</html>

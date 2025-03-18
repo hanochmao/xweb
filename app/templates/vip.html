@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>VIP</title>
+    <style>
+        .vip-container {
+            margin-top: 80px;
+        }
+
+        .up-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+        }
+
+        .pic-container {
+            width: 800px;
+            text-align: center;
+        }
+
+        .desc-container {
+            width: 800px;
+            border-style: solid;
+        }
+
+        .desc-container p {
+            margin-left: 20px;
+            font-size: 24px;
+        }
+
+
+        .down-container {
+            text-align: center;
+        }
+
+        .down-container p {
+            font-size: 36px;
+        }
+
+        .down-container button {
+            width: 20%;
+            padding: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="vip-container">
+        <div class="up-container">
+            <div class="pic-container">
+                <img src="{{ url_for('static', filename='images/wechat-pay-199.jpg') }}" alt="" width="500" height="700">
+            </div>
+            <div class="desc-container">
+                <p>vip权益说明：</p>
+                <p>1、大模型生成文章可正常使用，非vip用户仅可以试用30次；</p>
+            </div>
+        </div>
+        <div class="down-container">
+            <p>早鸟优惠价：199元/365天，早鸟阶段结束后会向上调整。</p>
+            <p style="color: red;">请务必在支付中备注您的注册邮箱，有任何问题，请及时<a href="{{home_addr}}/contact">联系我们</a>！！！</p>
+            <button id="partner-start-btn" onclick="window.location.href='{{home_addr}}'">确认</button>
+        </div>
+
+    </div>
+
+</body>
+</html>

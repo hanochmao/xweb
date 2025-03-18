@@ -1,0 +1,121 @@
+{% extends "headnav.html" %}
+
+{% block title %}login{% endblock %}
+
+{% block head %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>login</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .login-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 500px;
+            margin: 150px auto;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .password-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="login-container">
+        <h2>登录</h2>
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">邮箱</label>
+                <input type="email" id="email" placeholder="请输入邮箱" required>
+            </div>
+
+            <div class="password-group">
+                <label for="password">密码</label>
+                <div class="forgot-password">
+                    <a href="{{url_for('bp_forgetpw.forget_pw') }}">忘记密码？</a>
+                </div>
+            </div>
+
+
+            <div class="input-group">
+                <input type="password" id="password" name="password" placeholder="请输入密码" required>
+            </div>
+
+            <button type="submit" class="btn">登录</button>
+        </form>
+    </div>
+
+    <script>
+        const homeAddr = "{{ home_addr }}";
+        // 表单提交事件处理
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (email && password) {
+                const psResponse = await axios.post(`${homeAddr}/user/login/submit`, {
+                    email: email,
+                    password: password
+                });
+                const state_received = psResponse.data.text_received;
+                if (state_received === 'fail') {
+                    alert('邮箱或者密码错误！');
+                    return;
+                }
+                alert(`登录成功！\n邮箱：${email}`);
+                window.location.href = `${homeAddr}`;
+            } else {
+                alert('请填写完整的邮箱和密码！');
+            }
+        });
+    </script>
+{% endblock %}

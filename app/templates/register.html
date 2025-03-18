@@ -1,0 +1,161 @@
+{% extends "headnav.html" %}
+
+{% block title %}register{% endblock %}
+
+{% block head %}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>register</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            width: 500px;
+            margin: 150px auto;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .btn {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .hint {
+            font-size: 12px;
+            color: #888;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="container">
+        <h2>注册</h2>
+        <form id="registerForm">
+            <div class="form-group">
+                <label for="email">邮箱</label>
+                <input type="email" id="email" placeholder="请输入邮箱" required>
+                <p class="hint">我们不会将您的邮箱用于其他用途。</p>
+            </div>
+            <div class="form-group">
+                <label for="verificationCode">验证码</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="verificationCode" placeholder="请输入验证码" style="flex: 3;" required>
+                    <button type="button" class="btn" id="sendCodeBtn" style="flex: 1;">发送验证码</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="username">用户名</label>
+                <input type="text" id="username" placeholder="请输入用户名" required>
+            </div>
+            <div class="form-group">
+                <label for="password">密码</label>
+                <input type="password" id="password" placeholder="请输入密码" required>
+            </div>
+            <div class="form-group">
+                <label for="confirmPassword">确认密码</label>
+                <input type="password" id="confirmPassword" placeholder="请再次输入密码" required>
+            </div>
+            <button type="submit" class="btn">注册</button>
+        </form>
+    </div>
+
+    <script>
+        const homeAddr = "{{ home_addr }}";
+        // JavaScript 处理发送验证码按钮
+        document.getElementById('sendCodeBtn').addEventListener('click', function () {
+            const email = document.getElementById('email').value;
+            if (!homeAddr.trim()) {
+                alert('API 地址尚未加载，请稍后再试！');
+                return;
+            }
+            if (email) {
+                axios.post(`${homeAddr}/user/register/mail`, {
+                email: email
+            })
+                alert(`验证码已发送至邮箱`);
+                // 模拟发送验证码逻辑
+            } else {
+                alert('请先填写邮箱！');
+            }
+        });
+
+        // 表单提交验证
+        document.getElementById('registerForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirmPassword').value;
+            const verificationCode = document.getElementById('verificationCode').value;
+            if (password !== confirmPassword) {
+                alert('两次输入的密码不一致，请重新输入！');
+                return;
+            }
+            try {
+                // 验证码校验
+                const verificationResponse = await axios.post(`${homeAddr}/user/register/verified`, { email });
+                const verificationReceived = verificationResponse.data.text_received;
+                if (verificationCode !== verificationReceived) {
+                    alert('验证码错误！');
+                    return;
+                }
+                // 数据库写入
+                const state_response = await axios.post(`${homeAddr}/user/register/submit`, {
+                    email: email,
+                    username: username,
+                    password: password
+                });
+                const register_state = state_response.data.state;
+                if (register_state === "fail"){
+                    alert('该邮箱已经存在');
+                }
+                else{
+                    alert('注册成功！');
+                    window.location.href = `${homeAddr}/user/login`;
+                }
+            } catch (error) {
+                console.error('发生错误:', error);
+                alert('注册失败，请稍后再试！');
+            }
+        });
+
+    </script>
+{% endblock %}
+
+

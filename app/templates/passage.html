@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>words</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body, html {
+            height: 100%;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+        }
+
+        .page-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .word-container {
+            display: flex;
+            flex: 1;
+            flex-direction: row;
+            margin-top: 100px;
+            border-style: solid;
+            border-color: #6c757d;
+        }
+        .form-container {
+            flex-basis: 20%;
+            padding-left: 80px;
+            height: 1000px;
+        }
+        .form-container label{
+            padding: 10px;
+        }
+
+        .form-container h3 {
+            margin-top: 100px;
+            margin-bottom: 50px;
+        }
+        .word-gen-passage {
+            flex-basis: 80%;
+            text-align: center;
+        }
+        .word-row {
+            margin-top: 100px;
+            margin-bottom: 30px;
+        }
+
+        .word-row label {
+            margin-right: 30px;
+        }
+
+        .passage-container {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            text-align: center;
+            margin-top: 50px;
+        }
+        .page-container button{
+            width: 240px;
+            height: 50px;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .word-gen-passage button {
+            width: 240px;
+            height: 50px;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        textarea{
+            margin-top: 50px;
+            width: 1800px;
+            height: 600px;
+            margin-bottom: 30px;
+            font-size: 30px;
+            line-height: 2;
+        }
+
+
+        #options-container label {
+            display: block;
+            margin-bottom: 10px;
+        }
+
+
+
+    </style>
+</head>
+<body>
+    <div class="page-container">
+        <div class="word-container">
+            <div id="options-container" class="form-container">
+                <h3>Choose a Word Range</h3>
+                <!-- 创建 10 个单选框 -->
+                <form>
+                    <label><input type="radio" name="option" value="1">0-1000</label>
+                    <label><input type="radio" name="option" value="2">1001-2000</label>
+                    <label><input type="radio" name="option" value="3">2001-3000</label>
+                    <label><input type="radio" name="option" value="4">3001-4000</label>
+                    <label><input type="radio" name="option" value="5">4001-5000</label>
+                    <label><input type="radio" name="option" value="6">5001-6000</label>
+                    <label><input type="radio" name="option" value="7">6001-7000</label>
+                    <label><input type="radio" name="option" value="8">7001-8000</label>
+                    <label><input type="radio" name="option" value="9">8001-9000</label>
+                    <label><input type="radio" name="option" value="10">9001-10000</label>
+                </form>
+            </div>
+            <div class="word-gen-passage">
+                <div id="word-row-container" class="word-row">
+                <!-- 动态填充单词和单选框 -->
+                </div>
+                <div id="choice-button" class="interact-button">
+                    <button id="next-btn">Next</button>
+                </div>
+                <div id="gen-passage" class="gen-passage">
+                    <textarea id="unmastered-words" readonly placeholder="Passage will be generated here"></textarea>
+                </div>
+                <button id="gen-btn">Generage Passage</button>
+            </div>
+        </div>
+
+        <div class="passage-container">
+            <div class="back-container">
+                <button id="back-btn" onclick="window.location.href='{{ home_addr }}'">Back To Home Page</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const homeAddr = "{{ home_addr }}";
+        // 初始的单词列表
+        let words = [
+            "focus", "persistence", "courage", "determination", "success", "passion", "strength", "believe", "gratitude", "growth"
+        ];
+        // 用户的掌握情况，默认为空
+        let masteredWords = [];
+        // 渲染单词和单选框
+        function renderWords() {
+            const wordRowContainer = document.getElementById('word-row-container');
+            wordRowContainer.innerHTML = ''; // 清空现有内容
+            words.forEach((word, index) => {
+                const checkBox = document.createElement('input');
+                checkBox.type = 'checkbox';
+                checkBox.name = 'word-' + index;
+                checkBox.value = 'mastered';
+                checkBox.checked = wordSelections[word] || false;
+                const label = document.createElement('label');
+                label.innerHTML = word;
+                label.insertBefore(checkBox, label.firstChild);
+                wordRowContainer.appendChild(label);
+            });
+        }
+
+        // 获取当前的单词选择状态
+        let wordSelections = {};
+        function getSelections() {
+            const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach((checkbox) => {
+                const word = checkbox.parentNode.innerText.trim(); // 获取对应的单词
+                wordSelections[word] = checkbox.checked; // 存储单词和选择状态
+            });
+        }
+
+        // 处理 "Next" 按钮点击事件
+        let sendResult = {};
+        let optionValue = 0;
+        document.getElementById('next-btn').addEventListener('click', () => {
+            const selectedOption = document.querySelector('input[name="option"]:checked');
+            if (selectedOption) {
+                optionValue = selectedOption.value
+            }
+            sendResult["choice"] = optionValue;
+            // 获取用户选择的状态
+            wordSelections = {};
+            getSelections();
+            sendResult["wordState"] = wordSelections;
+            // 向后端发送当前单词的选择情况
+            fetch(`${homeAddr}/passage/words_check`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(sendResult), // 把选择状态传给后端
+            })
+            .then(response => response.json())
+            .then(data => {
+                // 假设后端返回新的10个单词
+                words.length = 0; // 清空当前单词数组
+                words.push(...data.newWords); // 从后端响应中获取新的单词列表
+                renderWords(); // 重新渲染单词和复选框
+            })
+            .catch(error => console.error('Error:', error));
+        });
+
+        //处理生成文章的按钮
+        document.getElementById('gen-btn').addEventListener('click', () => {
+            const selectedOption = document.querySelector('input[name="option"]:checked');
+            if (selectedOption) {
+                optionValue = selectedOption.value
+            }
+            axios.post(`${homeAddr}/passage/llm`, {
+                choice: optionValue,
+                flag: 'word2passage',
+            })
+                .then(response => {
+                    document.getElementById('unmastered-words').value = response.data.text_received;
+                    console.log(response.data);
+                })
+                .catch(error => {
+                    console.error('There was an error!', error);
+                });
+        });
+        // 初始化渲染
+        renderWords();
+    </script>
+</body>
+</html>

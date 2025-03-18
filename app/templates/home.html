@@ -1,0 +1,103 @@
+{% extends "headnav.html" %}
+
+{% block title %}home{% endblock %}
+
+{% block head %}
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .head-container {
+            margin-top: 100px;
+            text-align: center;
+        }
+        .product-container {
+            margin-top: 25px;
+            display: flex;
+            justify-content: center;
+            text-align: center;
+        }
+        .word-container, .speaking-container, .writing-container, .partner-container, .statis-container {
+            width: 200px;
+            height: 400px;
+            margin-top: 25px;
+            margin-right: 200px;
+        }
+
+        .product-container button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 50px;
+        }
+
+        .vip-container {
+            width: 100%;
+            text-align: center;
+        }
+
+        .vip-container button {
+            width: 20%;
+            padding: 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 200px;
+        }
+
+
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="head-container">
+        <h2>Choose Services You Need</h2>
+    </div>
+
+    <div class="product-container">
+        <div class="word-container">
+            <h2>Words</h2>
+            <button id="word-start-btn" onclick="window.location.href='{{home_addr}}/check'">Start</button>
+        </div>
+
+        <div class="speaking-container">
+            <h2>Speaking</h2>
+            <button id="speaking-start-btn" onclick="window.location.href='{{home_addr}}/speaking'">Start</button>
+        </div>
+
+        <div class="writing-container">
+            <h2>Writing</h2>
+            <button id="writing-start-btn" onclick="window.location.href='{{home_addr}}/writing'">Start</button>
+        </div>
+
+
+        <div class="partner-container">
+            <h2>Partner</h2>
+            <button id="partner-start-btn" onclick="window.location.href='{{home_addr}}/future'">Start</button>
+        </div>
+
+        <div class="statis-container">
+            <h2>Statis</h2>
+            <button id="statis-start-btn" onclick="window.location.href='{{home_addr}}/statis'">Start</button>
+        </div>
+    </div>
+
+    <!-- vip 区域先注释掉
+    <div class="vip-container">
+        <button id="statis-vip-btn" onclick="window.location.href='{{home_addr}}/vip'">VIP</button>
+    </div>
+    -->
+{% endblock %}
