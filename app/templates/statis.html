@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>DATA-SCREEN</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.3/dist/echarts.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .header {
+            width: 100%;
+            height: 8%;
+            background-color: #2c3e50;
+            display: flex;
+            justify-content: space-between; /* 左右两端对齐 */
+            align-items: center;
+        }
+
+        .nav-a {
+            margin-left: 10%;
+            display: flex;
+            flex-direction: row;
+            gap: 50px;
+        }
+
+        .back-btn {
+            margin-right: 5%;
+        }
+
+
+
+        .nav-a a, .back-btn{
+            width: 200px;
+            color: white;
+            text-decoration: none;
+            padding: 15px; /* 和上导航栏一致 */
+            text-align: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            border-radius: 4px;
+        }
+
+        .nav-a a:hover, .back-btn:hover {
+            background-color: #1abc9c;
+        }
+
+
+        /* 数据展示区域样式 */
+        .content {
+            background-color: #ecf0f1;
+        }
+
+        .words-passage, .seven-container {
+            margin-top: 20px;
+            height: 400px;
+            display: flex;
+        }
+
+        .words-num, .words-rate, .passage-num,.passage-rate {
+            width: 25%;
+        }
+
+        .seven-words, .seven-passage {
+            width: 50%;
+        }
+        .content p {
+            margin-top: 50px;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- 上导航栏 -->
+    <div class="header">
+        <div class="nav-a">
+            <a href="#" onclick="window.location.href='{{ home_addr }}/statis/overall'">Overall</a>
+            <a href="#" onclick="window.location.href='{{ home_addr }}/statis'">Words</a>
+            <a href="#" onclick="window.location.href='{{ home_addr }}/statis'">Speaking</a>
+            <a href="#" onclick="window.location.href='{{ home_addr }}/future'">Partner</a>
+        </div>
+        <!-- 用户按钮，固定在最右边 -->
+        <div class="back-btn" onclick="window.location.href='{{ home_addr }}'">Back Home</div>
+    </div>
+
+    <!-- 数据展示区域 -->
+    <div class="content">
+        <p>Today's Learning Progress</p>
+        <!-- 今日单词 -->
+        <div class="words-passage">
+            <!-- 单词数量 -->
+            <div class="words-num">
+                <div id="words-bar" style="width: 100%; height: 100%; background-color: #f9f9f9;"></div>
+            </div>
+            <!-- 单词分布 -->
+            <div class="words-rate">
+                <div id="words-pie" style="width: 100%; height: 100%; background-color: #f9f9f9;"></div>
+            </div>
+            <!-- 文章数量 -->
+            <div class="passage-num">
+                <div id="passage-bar" style="width: 100%; height: 100%; background-color: #f9f9f9;"></div>
+            </div>
+            <!-- 文章分布 -->
+            <div class="passage-rate">
+                <div id="passage-pie" style="width: 100%; height: 100%; background-color: #f9f9f9;"></div>
+            </div>
+        </div>
+
+        <p>Learning Progress in The Last 7 Days</p>
+        <div class="seven-container">
+            <div class="seven-words">
+                <div id="seven-words-line" style="width: 100%; height: 100%; background-color: #f9f9f9;"></div>
+            </div>
+            <div class="seven-passage">
+                <div id="seven-passage-line" style="width: 100%; height: 100%; background-color: #f9f9f9;"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        var wordsNum = echarts.init(document.getElementById('words-bar'));
+        var wordsRate = echarts.init(document.getElementById('words-pie'));
+        var passageNum = echarts.init(document.getElementById('passage-bar'));
+        var passageRate = echarts.init(document.getElementById('passage-pie'));
+
+        var sevenWordsLine = echarts.init(document.getElementById('seven-words-line'));
+        var sevenPassageLine = echarts.init(document.getElementById('seven-passage-line'));
+
+        // 动态适配容器大小
+        window.addEventListener('resize', function () {
+            wordsNum.resize();
+            wordsRate.resize();
+            passageNum.resize();
+            passageRate.resize();
+            sevenWordsLine.resize();
+            sevenPassageLine.resize();
+        });
+        // 异步获取数据
+        fetch('/statis/today')
+            .then(response => response.json())
+            .then(data => {
+                if (!data.words_category || !data.words_num || !data.passage_category || !data.passage_num) {
+                    throw new Error('数据格式错误');
+                }
+                var pic_words_bar = {
+                    title: {
+                        text: 'words num'
+                    },
+                    tooltip: {
+                        trigger: 'item'
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: data.words_category
+                    },
+                    yAxis: {
+                        type: 'value'
+                    },
+                    series: [{
+                        data: data.words_num,
+                        type: 'bar'
+                    }]
+                };
+                wordsNum.setOption(pic_words_bar);
+
+                var pic_words_pie = {
+                    title: {
+                        text: 'words rate'
+                    },
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{a} <br/>{b}: {c} ({d}%)' // 提示框显示百分比
+                    },
+                    series: [{
+                        type: 'pie',
+                        data: [
+                            { value: data.words_num[0], name: data.words_category[0] },
+                            { value: data.words_num[1], name: data.words_category[1] }
+                        ],
+                        label: {
+                            show: true,
+                            formatter: '{b}: {d}%' // 标签显示百分比
+                        }
+                    }]
+                };
+                wordsRate.setOption(pic_words_pie);
+
+                var pic_passage_bar = {
+                    title: {
+                        text: 'passage num'
+                    },
+                    tooltip: {
+                        trigger: 'item'
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: data.passage_category
+                    },
+                    yAxis: {
+                        type: 'value'
+                    },
+                    series: [{
+                        data: data.passage_num,
+                        type: 'bar'
+                    }]
+                };
+                passageNum.setOption(pic_passage_bar);
+
+                var pic_passage_pie = {
+                    title: {
+                        text: 'passage rate'
+                    },
+                    tooltip: {
+                        trigger: 'item',
+                        formatter: '{a} <br/>{b}: {c} ({d}%)' // 提示框显示百分比
+                    },
+                    series: [{
+                        type: 'pie',
+                        data: [
+                            { value: data.passage_num[0], name: data.passage_category[0] },
+                            { value: data.passage_num[1], name: data.passage_category[1] }
+                        ],
+                        label: {
+                            show: true,
+                            formatter: '{b}: {d}%' // 标签显示百分比
+                        }
+                    }]
+                };
+                passageRate.setOption(pic_passage_pie);
+
+
+                // 7天数据
+                const seven_words_line = {
+                    title: {
+                        text: 'The learning status of words in the past 7 days'
+                    },
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    legend: {
+                        data: data.seven_data.seven_words.map(item => item.name)
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: data.seven_data.category
+                    },
+                    yAxis: {
+                        type: 'value'
+                    },
+                    series: data.seven_data.seven_words.map(item => ({
+                        name: item.name,
+                        type: 'line',
+                        data: item.data
+                    }))
+                };
+                // 使用刚指定的配置项和数据显示图表。
+                sevenWordsLine.setOption(seven_words_line);
+
+
+                // 7天数据
+                const seven_passage_line = {
+                    title: {
+                        text: 'The learning status of passages in the past 7 days'
+                    },
+                    tooltip: {
+                        trigger: 'axis'
+                    },
+                    legend: {
+                        data: data.seven_data.seven_passages.map(item => item.name)
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: data.seven_data.category
+                    },
+                    yAxis: {
+                        type: 'value'
+                    },
+                    series: data.seven_data.seven_passages.map(item => ({
+                        name: item.name,
+                        type: 'line',
+                        data: item.data
+                    }))
+                };
+                // 使用刚指定的配置项和数据显示图表。
+                sevenPassageLine.setOption(seven_passage_line);
+
+            })
+
+
+
+
+
+            .catch(error => {
+                console.error('Error fetching or processing chart data:', error);
+                wordsNum.setOption({
+                    title: { text: '数据加载失败' },
+                    xAxis: { type: 'words_category', data: [] },
+                    yAxis: { type: 'words_num' },
+                    series: [{ type: 'bar', data: [] }]
+                });
+
+                wordsRate.setOption({
+                    title: { text: '数据加载失败' },
+                    series: [{ type: 'pie', data: [] }]
+                });
+
+                passageNum.setOption({
+                    title: { text: '数据加载失败' },
+                    xAxis: { type: 'words_category', data: [] },
+                    yAxis: { type: 'words_num' },
+                    series: [{ type: 'bar', data: [] }]
+                });
+
+                passageRate.setOption({
+                    title: { text: '数据加载失败' },
+                    series: [{ type: 'pie', data: [] }]
+                });
+            });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Viewer</title>
+    <style>
+        /* CSS 样式 */
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            display: flex;
+            height: 100%;
+        }
+
+        .sidebar {
+            width: 200px;
+            background-color: #333;
+            color: white;
+            padding: 20px;
+        }
+
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .sidebar ul li {
+            margin: 15px 0;
+        }
+
+        .sidebar ul li a {
+            color: white;
+            text-decoration: none;
+        }
+
+        .sidebar ul li a:hover {
+            text-decoration: underline;
+        }
+
+        .content {
+            flex-grow: 1;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+
+        iframe {
+            border: none;
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 左侧导航栏 -->
+        <div class="sidebar">
+            <ul>
+                <!-- 动态生成导航栏 -->
+                {% for pdf in pdf_files %}
+                <li><a href="#" data-pdf="{{ url_for('static', filename=pdf.path) }}">{{ pdf.name }}</a></li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- 右侧内容区域 -->
+        <div class="content">
+            <iframe id="pdf-viewer" src=""></iframe>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript 逻辑
+        document.addEventListener('DOMContentLoaded', function() {
+            const links = document.querySelectorAll('.sidebar a');
+            const pdfViewer = document.getElementById('pdf-viewer');
+
+            links.forEach(link => {
+                link.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    const pdfFile = this.getAttribute('data-pdf');
+                    pdfViewer.setAttribute('src', pdfFile);
+                });
+            });
+        });
+    </script>
+</body>
+</html>
